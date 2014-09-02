@@ -1,0 +1,21 @@
+I've finally put the slides and code for this talk on https://github.com/archontophoenix/syntaxTalk.
+
+Now that I've had some time to digest, I realize that my ideas about how to build a compiler could be simplified and generalized. In particular, you can imagine a compiler as consisting of pluggable parts on three different levels: quotation macros (which process characters), delimited macros (which process tokens), and ordinary macros (which process expressions). The idea behind making these parts configurable is to allow you to experiment quickly with alternate sytnaxes.
+
+A quotation macro takes a stream of characters and returns an expression in the underlying intermediate representation (here Um, a slightly augmented version of the dependently typed lambda calculus), along with the unconsumed part of the input stream. You can look up a quotation macro by its opening character. An example might be the neutral double quote character, which builds a string literal out of the characters up to the next double quote.
+
+A quotation macro may include a tokenizer, which transforms a stream of characters into a stream of tokens. 
+
+A delimited macro takes a stream of tokens and returns an expression and the rest of the stream. You can look up a delimited macro by its opening token. An example might be the open paren, which consumes all tokens up to the corresponding closing paren.
+
+A delimited macro may break out the logic that turns tokens into an expression into an expressionizer.
+
+An ordinary macro takes zero or more expressions as arguments and returns an expression. Ordinary macros are bound to Um variables, which means Um must be extended to include an explicit notion of macro. An example might be comma, which expands to the (infix) lambda operator that defines functions.
+
+Ordinary macros can be defined in the same source file where they are used, which is not possible with quotation or delimited macros (because you need to have processed the file into expressions in order to bind or look up a macro). Quotation and delimited macros can be (re)defined only by replacing the compiler's initial symbol table (the Prelude if you're from Haskell; Predef if you're from Scala).
+
+A source file is processed by feeding it to the start-of-input quotation macro, where the default start-of-input quotation macro invokes the standard tokenizer and passes the resulting tokens to the expressionizer used by the curly brace delimited macro (which infers semicolons at newlines which are not adjacent to a binary operator).
+
+Tokenizers and expressionizers are not themselves macros, but because they govern much of the behavior of quotation and delimited macros, useful ones should be put in libraries where they can be reused.
+
+The code I've posted differs quite a bit from the above concept: it doesn't support quotation macros; the termination criteria for delimited macros is under control of the top-level parser, rather than the delimited macros themselves; and there is no mechanism in Um for declaring or looking up macros, so all macros are hardwired.
